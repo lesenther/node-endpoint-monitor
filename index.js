@@ -66,7 +66,7 @@ async function checkEndpoint(config) {
     console.log(`Result: `, JSON.stringify(result.data));
   }
 
-  if (previousResult && config.compare(previousResult, result)) {
+  if (previousResult && config.compare(result, previousResult)) {
     config.action(result);
   }
 
