@@ -34,20 +34,15 @@ function init(config = {}) {
 * 
 */
 async function listen(config = {}) { 
-  try {
-    // Immediately check state
-    await checkEndpoint(config);
+  // Immediately check state
+  const status = await checkEndpoint(config);
 
-    // Schedule next check
-    setTimeout(_ => listen(config), config.interval * 1000);
-  } catch(err) {
-    console.error(err);
-
-    // Persist on errors
-    if (config.persist) {
-      setTimeout(_ => listen(config), config.interval * 1000);
-    }
+  if (!status && !config.persist) {
+    return console.error('Check failed.  Not set to persist, aborting...');
   }
+
+  // Schedule next check
+  setTimeout(_ => listen(config), config.interval * 1000);
 }
 
 /**
@@ -56,23 +51,29 @@ async function listen(config = {}) {
 * @param {object} config 
 */
 async function checkEndpoint(config) {
-  if (config.verbose) {
-    console.log(`Checking endpoint... [${new Date().toLocaleString()}]`);
-  }
+  try {
+    if (config.verbose) {
+      console.log(`Checking endpoint... [${new Date().toLocaleString()}]`);
+    }
+    
+    const result = await axios.get(config.endpoint, { timeout: config.timeout * 1000 });
+    
+    if (config.verbose) {
+      console.log(`Result: `, JSON.stringify(result.data));
+    }
   
-  const result = await axios.get(config.endpoint, { timeout: config.timeout * 1000 });
+    if (config.compare(result.data, previousResult)) {
+      config.action(result.data);
+    }
   
-  if (config.verbose) {
-    console.log(`Result: `, JSON.stringify(result.data));
+    previousResult = result.data;
+  
+    return true;
+  } catch (err) {
+    console.error(`Fail:  ${err.message}`);
+
+    return false;
   }
-
-  if (previousResult && config.compare(result, previousResult)) {
-    config.action(result);
-  }
-
-  previousResult = result;
-
-  return;
 }
 
 module.exports = init;
