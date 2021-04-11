@@ -1,5 +1,7 @@
 const axios = require('axios');
 
+const package = require('./package.json');
+
 // System config
 const defaults = {
   interval : 10,    // Seconds between each check
@@ -7,8 +9,11 @@ const defaults = {
   verbose  : false, // Show log messages
   endpoint : null,  // Endpoint to watch
   compare  : (a, b) => JSON.stringify(a) !== JSON.stringify(b),
-  action   : response => console.notice(response),
+  action   : response => console.log(response),
   persist  : false, // Persist on errors
+  headers  : {      // Set defaults for request headers
+    get: { 'User-Agent': `endpoint-monitor v${package.version}` } 
+  },
 };
 
 let previousResult = false;
@@ -24,6 +29,16 @@ function init(config = {}) {
 
   // Import user config replacing system params
   config = { ...defaults, ...config };
+
+  // Set headers
+  for (const header in config.headers) {
+    if (axios.defaults.headers.hasOwnProperty(header)) {
+      axios.defaults.headers[header] = {
+        ...axios.defaults.headers[header],
+        ...config.headers[header],
+      };
+    }
+  }
 
   // Start listening to endpoint
   listen(config);

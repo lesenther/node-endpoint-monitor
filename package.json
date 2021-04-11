@@ -1,6 +1,6 @@
 {
   "name": "endpoint-monitor",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Monitors an endpoint and does something if it changes",
   "author": "Logan Esenther (logan@cal.berkeley.edu)",
   "main": "index.js",
